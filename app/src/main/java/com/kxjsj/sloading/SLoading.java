@@ -12,11 +12,18 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Parcelable;
+import android.support.v4.view.animation.FastOutLinearInInterpolator;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.OvershootInterpolator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,8 +38,8 @@ import java.util.List;
 public class SLoading extends View {
 
 
-    private int[] color = {0xFFF4511E,0xFFFDD835,0xFF43A047,
-    0xFF1E88E5,0xFF8E24AA,0xFF546E7A};
+    private int[] color = {0xFFF4511E, 0xFFFDD835, 0xFF43A047,
+            0xFF1E88E5, 0xFF8E24AA, 0xFF546E7A};
 
     private float gap = -1;
 
@@ -46,7 +53,6 @@ public class SLoading extends View {
     private int height = 100;
     List<Progress> list = new ArrayList<>();
     private AnimatorSet set;
-    private ValueAnimator.AnimatorUpdateListener listener;
 
     public SLoading(Context context) {
         this(context, null);
@@ -69,8 +75,8 @@ public class SLoading extends View {
         num = a.getInt(R.styleable.SLoading_snum, -1);
         int resourceId = a.getResourceId(R.styleable.SLoading_scolors, 0);
         try {
-            if(resourceId!=0)
-             color = getResources().getIntArray(resourceId);
+            if (resourceId != 0)
+                color = getResources().getIntArray(resourceId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -106,7 +112,7 @@ public class SLoading extends View {
             radius = height / 2;
 
         for (int i = 0; i < num; i++) {
-            list.add(new Progress((float) i / (float) num, radius,color[i%color.length]));
+            list.add(new Progress(radius, i));
         }
 
         setMeasuredDimension(width, height);
@@ -118,7 +124,7 @@ public class SLoading extends View {
         super.onDraw(canvas);
         for (int i = 0; i < num; i++) {
             paint.setAlpha((int) ((0.3 + 0.7 * list.get(i).getPercentage()) * 255));
-            paint.setColor(list.get(i).getColor());
+            paint.setColor(color[list.get(i).getColorIndex() % color.length]);
             canvas.drawCircle(calculateCenterX(i), height / 2, list.get(i).getCurrent(), paint);
         }
     }
@@ -165,24 +171,25 @@ public class SLoading extends View {
         return this;
     }
 
-    private ObjectAnimator getAnimator(Progress progress) {
-        float current = progress.getPercentage();
+    private ObjectAnimator getAnimator(final Progress progress, final int i) {
         ObjectAnimator animator = ObjectAnimator.ofObject(progress, "percentage", new FloatEvaluator(), 0, 1);
-        animator.setDuration(500);
+        animator.setDuration(700);
         animator.setRepeatCount(-1);
-        animator.setStartDelay((long) ((1-current)*500));
-        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.setStartDelay((long) (i * 700 / num));
+        animator.setInterpolator(new OvershootInterpolator());
         animator.setRepeatMode(ValueAnimator.REVERSE);
-        if(listener==null) {
-            listener = new ValueAnimator.AnimatorUpdateListener() {
+        if (i == 0) {
+            ValueAnimator.AnimatorUpdateListener listener = new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                        Log.i("DEBUG", "onAnimationUpdate: "+valueAnimator.getAnimatedFraction());
-                          postInvalidate();
+
+                    postInvalidate();
                 }
             };
             animator.addUpdateListener(listener);
         }
+        animator.addListener(new Anl(progress));
+
         return animator;
     }
 
@@ -191,7 +198,7 @@ public class SLoading extends View {
             set = new AnimatorSet();
             Collection<Animator> animators = new ArrayList<>(num);
             for (int i = 0; i < num; i++) {
-                ObjectAnimator animator = getAnimator(list.get(i));
+                ObjectAnimator animator = getAnimator(list.get(i), i);
                 animators.add(animator);
             }
             set.playTogether(animators);
@@ -222,21 +229,24 @@ public class SLoading extends View {
         }
     }
 
-    private static class Progress  {
+    private static class Progress {
         float percentage = 0;
         float current;
         float radius;
-        int color;
+        int colorIndex;
 
-        public Progress(float percentage, float radius,int color) {
-            this.percentage = percentage;
+        public Progress(float radius, int colorIndex) {
             this.current = percentage * radius;
             this.radius = radius;
-            this.color=color;
+            this.colorIndex = colorIndex;
         }
 
-        public int getColor() {
-            return color;
+        public void setColorIndex(int colorIndex) {
+            this.colorIndex = colorIndex;
+        }
+
+        public int getColorIndex() {
+            return colorIndex;
         }
 
         public float getCurrent() {
@@ -253,5 +263,43 @@ public class SLoading extends View {
         }
     }
 
+    static  class Anl implements Animator.AnimatorListener {
+        Progress progress;
 
+        public Anl(Progress progress) {
+            this.progress = progress;
+        }
+
+        @Override
+        public void onAnimationStart(Animator animation, boolean isReverse) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation, boolean isReverse) {
+
+        }
+
+        @Override
+        public void onAnimationStart(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+            int colorIndex = progress.getColorIndex();
+            progress.setColorIndex(++colorIndex);
+            Log.i("dddd", "onAnimationRepeat: "+colorIndex);
+        }
+    }
 }
