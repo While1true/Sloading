@@ -38,20 +38,49 @@ import java.util.List;
 public class SLoading extends View {
 
 
+    /**
+     * 颜色变幻数组
+     */
     private int[] color = {0xFFF4511E, 0xFFFDD835, 0xFF43A047,
             0xFF1E88E5, 0xFF8E24AA, 0xFF546E7A};
 
+    /**
+     * 圆间隔
+     */
     private float gap = -1;
 
+    /**
+     * 圆半径
+     */
     private float radius = -1;
 
+    /**
+     * 圆个数
+     */
     private int num = 3;
+
+    /**
+     * 变方式
+     * 0：单色 1：多色
+     */
+    int type = 0;
 
     private Paint paint;
 
+    /**
+     * 默认宽高
+     */
     private int width = 60;
     private int height = 100;
+
+    /**
+     * 圆实体
+     */
     List<Progress> list = new ArrayList<>();
+
+    /**
+     * 动画集
+     */
     private AnimatorSet set;
 
     public SLoading(Context context) {
@@ -73,7 +102,8 @@ public class SLoading extends View {
         radius = a.getDimension(R.styleable.SLoading_sradius, -1);
         gap = a.getDimension(R.styleable.SLoading_sgap, -1);
         num = a.getInt(R.styleable.SLoading_snum, -1);
-        int resourceId = a.getResourceId(R.styleable.SLoading_scolors, 0);
+        type=a.getInt(R.styleable.SLoading_scolortype,0);
+        int resourceId = a.getResourceId(R.styleable.SLoading_scolorarray, 0);
         try {
             if (resourceId != 0)
                 color = getResources().getIntArray(resourceId);
@@ -112,7 +142,7 @@ public class SLoading extends View {
             radius = height / 2;
 
         for (int i = 0; i < num; i++) {
-            list.add(new Progress(radius, i));
+            list.add(new Progress(radius,type==0?0:(num-i%num)));
         }
 
         setMeasuredDimension(width, height);
@@ -123,7 +153,8 @@ public class SLoading extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         for (int i = 0; i < num; i++) {
-            paint.setAlpha((int) ((0.3 + 0.7 * list.get(i).getPercentage()) * 255));
+            Log.i("=----------", "onDraw: " + ((0.1 + 0.7 * list.get(i).getPercentage()) * 255));
+            paint.setAlpha((int) ((0.1 + 0.7 * list.get(i).getPercentage()) * 255));
             paint.setColor(color[list.get(i).getColorIndex() % color.length]);
             canvas.drawCircle(calculateCenterX(i), height / 2, list.get(i).getCurrent(), paint);
         }
@@ -155,6 +186,13 @@ public class SLoading extends View {
         return this;
     }
 
+    public SLoading setType(int type) {
+        if (type > 1)
+            type = 0;
+        this.type = type;
+        return this;
+    }
+
     public SLoading setNum(int num) {
         this.num = num;
         return this;
@@ -172,11 +210,11 @@ public class SLoading extends View {
     }
 
     private ObjectAnimator getAnimator(final Progress progress, final int i) {
-        ObjectAnimator animator = ObjectAnimator.ofObject(progress, "percentage", new FloatEvaluator(), 0, 1);
-        animator.setDuration(700);
+        ObjectAnimator animator = ObjectAnimator.ofObject(progress, "percentage", new FloatEvaluator(), 0.3, 1, 0.3);
+        animator.setDuration(1200);
         animator.setRepeatCount(-1);
         animator.setStartDelay((long) (i * 700 / num));
-        animator.setInterpolator(new OvershootInterpolator());
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
         animator.setRepeatMode(ValueAnimator.REVERSE);
         if (i == 0) {
             ValueAnimator.AnimatorUpdateListener listener = new ValueAnimator.AnimatorUpdateListener() {
@@ -204,9 +242,13 @@ public class SLoading extends View {
             set.playTogether(animators);
             set.start();
         } else {
-
-            if (!set.isStarted())
+            if (!set.isStarted()) {
+                for (int i = 0; i < num; i++) {
+                    list.get(i).setColorIndex(type==0?0:(num-i%num));
+                    list.get(i).setPercentage(0);
+                }
                 set.start();
+            }
         }
     }
 
@@ -230,9 +272,13 @@ public class SLoading extends View {
     }
 
     private static class Progress {
+        //进度百分比
         float percentage = 0;
+        //当前半径
         float current;
+        //最大半径
         float radius;
+        //颜色下标
         int colorIndex;
 
         public Progress(float radius, int colorIndex) {
@@ -263,7 +309,7 @@ public class SLoading extends View {
         }
     }
 
-    static  class Anl implements Animator.AnimatorListener {
+    static class Anl implements Animator.AnimatorListener {
         Progress progress;
 
         public Anl(Progress progress) {
@@ -299,7 +345,7 @@ public class SLoading extends View {
         public void onAnimationRepeat(Animator animator) {
             int colorIndex = progress.getColorIndex();
             progress.setColorIndex(++colorIndex);
-            Log.i("dddd", "onAnimationRepeat: "+colorIndex);
+            Log.i("dddd", "onAnimationRepeat: " + colorIndex);
         }
     }
 }
