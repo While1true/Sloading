@@ -153,7 +153,7 @@ public class SLoading extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         for (int i = 0; i < num; i++) {
-            Log.i("=----------", "onDraw: " + ((0.1 + 0.7 * list.get(i).getPercentage()) * 255));
+            Log.i("=----------", "onDraw: " + ((0.1 + 0.6 * list.get(i).getPercentage()) * 255));
             paint.setAlpha((int) ((0.1 + 0.7 * list.get(i).getPercentage()) * 255));
             paint.setColor(color[list.get(i).getColorIndex() % color.length]);
             canvas.drawCircle(calculateCenterX(i), height / 2, list.get(i).getCurrent(), paint);
