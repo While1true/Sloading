@@ -33,9 +33,32 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/button"
-        android:layout_marginEnd="12dp"
-        android:layout_marginRight="12dp"
         android:onClick="c2"
         android:text="暂停" />
+
+    <Button
+        android:id="@+id/button3"
+        android:onClick="c3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="切换type"
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
+        android:layout_alignBaseline="@+id/button4"
+        android:layout_alignBottom="@+id/button4"
+        android:layout_toRightOf="@+id/button"
+        android:layout_toEndOf="@+id/button" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_marginLeft="13dp"
+        android:layout_toEndOf="@+id/button3"
+        android:layout_toRightOf="@+id/button3"
+        android:onClick="c4"
+        android:text="数量大小变更" />
 
 </RelativeLayout>

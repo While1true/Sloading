@@ -82,6 +82,7 @@ public class SLoading extends View {
      * 动画集
      */
     private AnimatorSet set;
+    private List<Animator> animators;
 
     public SLoading(Context context) {
         this(context, null);
@@ -102,7 +103,7 @@ public class SLoading extends View {
         radius = a.getDimension(R.styleable.SLoading_sradius, -1);
         gap = a.getDimension(R.styleable.SLoading_sgap, -1);
         num = a.getInt(R.styleable.SLoading_snum, -1);
-        type=a.getInt(R.styleable.SLoading_scolortype,0);
+        type = a.getInt(R.styleable.SLoading_scolortype, 0);
         int resourceId = a.getResourceId(R.styleable.SLoading_scolorarray, 0);
         try {
             if (resourceId != 0)
@@ -124,16 +125,18 @@ public class SLoading extends View {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+
+        int contentLength = (int) (2 * num * radius + (num - 1) * gap);
         if (widthMode == MeasureSpec.EXACTLY) {
             width = widthSize;
         } else {
-            width = Math.min(width, widthSize);
+            width = Math.min(contentLength, widthSize);
         }
 
         if (heightMode == MeasureSpec.EXACTLY) {
             height = heightSize;
         } else {
-            height = Math.min(height, heightSize);
+            height = (int) Math.min(2 * radius, heightSize);
         }
         if (gap == -1)
             gap = height / 2;
@@ -141,10 +144,12 @@ public class SLoading extends View {
         if (radius == -1)
             radius = height / 2;
 
-        for (int i = 0; i < num; i++) {
-            list.add(new Progress(radius,type==0?0:(num-i%num)));
-        }
+        if (list.size() == 0) {
+            for (int i = 0; i < num; i++) {
+                list.add(new Progress(radius, type == 0 ? 0 : ((num - i) % num)));
+            }
 
+        }
         setMeasuredDimension(width, height);
     }
 
@@ -167,7 +172,6 @@ public class SLoading extends View {
 
     private int calculateStart() {
         int contentLength = (int) (2 * num * radius + (num - 1) * gap);
-
         return width / 2 - contentLength / 2;
     }
 
@@ -191,6 +195,10 @@ public class SLoading extends View {
             type = 0;
         this.type = type;
         return this;
+    }
+
+    public int getType() {
+        return type;
     }
 
     public SLoading setNum(int num) {
@@ -232,9 +240,10 @@ public class SLoading extends View {
     }
 
     private void goAnimator() {
+        Log.i("aa", "resizeToNum: " + num + "--" + list.size());
         if (set == null) {
             set = new AnimatorSet();
-            Collection<Animator> animators = new ArrayList<>(num);
+            animators = new ArrayList<>(num);
             for (int i = 0; i < num; i++) {
                 ObjectAnimator animator = getAnimator(list.get(i), i);
                 animators.add(animator);
@@ -243,13 +252,39 @@ public class SLoading extends View {
             set.start();
         } else {
             if (!set.isStarted()) {
+                resizeToNum();
                 for (int i = 0; i < num; i++) {
-                    list.get(i).setColorIndex(type==0?0:(num-i%num));
+                    list.get(i).setColorIndex(type == 0 ? 0 : (num - i % num));
+                    list.get(i).setRadius(radius);
                     list.get(i).setPercentage(0);
                 }
+                set.getChildAnimations().clear();
+                set.playTogether(animators);
                 set.start();
             }
         }
+    }
+
+    /**
+     * 调整到指定个数
+     */
+    private void resizeToNum() {
+        Log.i("aa", "resizeToNum: " + num + "--" + list.size());
+        int size = list.size();
+        if (num > list.size()) {
+
+            for (int i = 0; i < num - size; i++) {
+                Progress e = new Progress(radius, type == 0 ? 0 : ((size + num - i) % num));
+                animators.add(getAnimator(e, i + size));
+                list.add(e);
+            }
+        } else if (num < size) {
+            for (int i = 0; i < size - num; i++) {
+                animators.remove(animators.size() - 1);
+                list.remove(list.size() - 1);
+            }
+        }
+        Log.i("aa", "resizeToNum: " + num + "--" + list.size());
     }
 
     @Override
@@ -260,6 +295,8 @@ public class SLoading extends View {
     @Override
     protected void onDetachedFromWindow() {
         stopAnimator();
+        if (animators != null)
+            animators.clear();
         super.onDetachedFromWindow();
     }
 
@@ -289,6 +326,10 @@ public class SLoading extends View {
 
         public void setColorIndex(int colorIndex) {
             this.colorIndex = colorIndex;
+        }
+
+        public void setRadius(float radius) {
+            this.radius = radius;
         }
 
         public int getColorIndex() {
