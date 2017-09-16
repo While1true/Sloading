@@ -4,7 +4,7 @@
 ---
 圆的数量，大小，颜色 间隙 都可改变
 
-[github 地址](https://github.com/While1true/Sloading)
+[简书 地址](http://www.jianshu.com/p/b03750a83fb4)
 ---
 ### 1.效果
 ![image](http://upload-images.jianshu.io/upload_images/6456519-00c279b76ec9453d.gif?imageMogr2/auto-orient/strip)
