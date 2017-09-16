@@ -83,6 +83,7 @@ public class SLoading extends View {
      */
     private AnimatorSet set;
     private List<Animator> animators;
+    private int contentLength;
 
     public SLoading(Context context) {
         this(context, null);
@@ -126,7 +127,7 @@ public class SLoading extends View {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
 
-        int contentLength = (int) (2 * num * radius + (num - 1) * gap);
+        contentLength = (int) (2 * num * radius + (num - 1) * gap);
         if (widthMode == MeasureSpec.EXACTLY) {
             width = widthSize;
         } else {
@@ -171,7 +172,6 @@ public class SLoading extends View {
 
 
     private int calculateStart() {
-        int contentLength = (int) (2 * num * radius + (num - 1) * gap);
         return width / 2 - contentLength / 2;
     }
 
@@ -180,31 +180,6 @@ public class SLoading extends View {
         return this;
     }
 
-    public SLoading setGap(int gap) {
-        this.gap = gap;
-        return this;
-    }
-
-    public SLoading setRadius(int radius) {
-        this.radius = radius;
-        return this;
-    }
-
-    public SLoading setType(int type) {
-        if (type > 1)
-            type = 0;
-        this.type = type;
-        return this;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public SLoading setNum(int num) {
-        this.num = num;
-        return this;
-    }
 
     public SLoading startAnimator() {
         post(new Runnable() {
@@ -252,40 +227,16 @@ public class SLoading extends View {
             set.start();
         } else {
             if (!set.isStarted()) {
-                resizeToNum();
                 for (int i = 0; i < num; i++) {
                     list.get(i).setColorIndex(type == 0 ? 0 : (num - i % num));
                     list.get(i).setRadius(radius);
                     list.get(i).setPercentage(0);
                 }
-                set.getChildAnimations().clear();
-                set.playTogether(animators);
                 set.start();
             }
         }
     }
 
-    /**
-     * 调整到指定个数
-     */
-    private void resizeToNum() {
-        Log.i("aa", "resizeToNum: " + num + "--" + list.size());
-        int size = list.size();
-        if (num > list.size()) {
-
-            for (int i = 0; i < num - size; i++) {
-                Progress e = new Progress(radius, type == 0 ? 0 : ((size + num - i) % num));
-                animators.add(getAnimator(e, i + size));
-                list.add(e);
-            }
-        } else if (num < size) {
-            for (int i = 0; i < size - num; i++) {
-                animators.remove(animators.size() - 1);
-                list.remove(list.size() - 1);
-            }
-        }
-        Log.i("aa", "resizeToNum: " + num + "--" + list.size());
-    }
 
     @Override
     protected Parcelable onSaveInstanceState() {

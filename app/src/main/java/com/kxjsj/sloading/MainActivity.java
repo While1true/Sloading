@@ -24,15 +24,5 @@ public class MainActivity extends AppCompatActivity {
     public void c2(View v) {
         sLoading.stopAnimator();
     }
-    public void c3(View v) {
-        sLoading.stopAnimator();
-        sLoading.setType(sLoading.getType()==0?1:0);
-        sLoading.startAnimator();
-    }
-    public void c4(View v) {
-        sLoading.stopAnimator();
-        sLoading.setNum((3+new Random().nextInt(6)))
-                .setRadius(24+new Random().nextInt(48));
-        sLoading.startAnimator();
-    }
+
 }
